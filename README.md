@@ -19,7 +19,7 @@ If you use this software in your work, please cite it using the following BibTeX
 @software{Durham_mm-kermac_2025,
   author       = {Durham, Charlie},
   title        = {mm-kermac: PTX Inject and Stack PTX for Python},
-  version      = {0.1.0},
+  version      = {0.1.1},
   date-released = {2025-10-19},
   url          = {https://github.com/MetaMachines/mm-kermac-py}
 }
