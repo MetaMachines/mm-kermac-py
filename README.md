@@ -2,8 +2,15 @@
 > Dynamically compiled hyper semirings for Pytorch using PTX Inject and Stack PTX
 
 ## Installation
+Depending on your cuda toolkit version do one of these:
 ```bash
-pip install mm-kermac
+pip install mm-kermac[cu11]
+```
+```bash
+pip install mm-kermac[cu12]
+```
+```bash
+pip install mm-kermac[cu13]
 ```
 
 ## TODO
