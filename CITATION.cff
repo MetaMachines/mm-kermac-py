@@ -5,6 +5,6 @@ authors:
     given-names: "Charlie"
     email: "charlie@metamachines.co"
 title: "mm-kermac: Dynamically compiled hyper semirings for Pytorch using PTX Inject and Stack PTX"
-version: 0.1.1
+version: 0.1.2
 date-released: 2025-10-19
 url: "https://github.com/MetaMachines/mm-kermac-py"
