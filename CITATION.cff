@@ -7,4 +7,4 @@ authors:
 title: "mm-kermac: Dynamically compiled hyper semirings for Pytorch using PTX Inject and Stack PTX"
 version: 0.1.1
 date-released: 2025-10-19
-url: url: "https://github.com/MetaMachines/mm-kermac-py"
+url: "https://github.com/MetaMachines/mm-kermac-py"
