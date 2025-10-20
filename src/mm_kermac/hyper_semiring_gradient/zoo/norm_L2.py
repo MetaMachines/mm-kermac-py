@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 MetaMachines LLC
+#
+# SPDX-License-Identifier: MIT
+
 from mm_kermac import PtxInstruction
 from mm_kermac.hyper_semiring_gradient import HyperSemiringGradientKernel
 

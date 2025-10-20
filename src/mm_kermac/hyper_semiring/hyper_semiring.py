@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 MetaMachines LLC
+#
+# SPDX-License-Identifier: MIT
+
 from cuda.core.experimental import Device, LaunchConfig, launch, ObjectCode
 
 from mm_kermac.ptx_inject_cache.ptx_inject_cache import *
