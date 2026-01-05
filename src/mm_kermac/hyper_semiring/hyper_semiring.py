@@ -20,8 +20,7 @@ from mm_kermac.stack_ptx_types import compiler as stack_ptx_compiler
 class HyperSemiringKernel():
     def __init__(
         self,
-        multiply_lambda,
-        accumulate_lambda,
+        mma_lambda,
         epilogue_lambda,
         execution_limit=100,
         max_ast_size=100,
@@ -29,8 +28,7 @@ class HyperSemiringKernel():
         stack_size=128,
         max_frame_depth=4
     ):
-        self.multiply_lambda = multiply_lambda
-        self.accumulate_lambda = accumulate_lambda
+        self.mma_lambda = mma_lambda
         self.epilogue_lambda = epilogue_lambda
 
         self.cubin_kernels_dict = {}
@@ -113,6 +111,9 @@ class HyperSemiringKernel():
                 return "".join(
                     f",\n{' ' * indent}PTX_IN(F32, hyper{i})" for i in range(num)
                 )
+
+            mma_hypers = _ptx_in_block(24)
+            epilogue_hypers = _ptx_in_block(12)
             
             templates = [
                 "\n\t".join(f"class HYPER{i}Stride," for i in range(num)),
@@ -120,9 +121,9 @@ class HyperSemiringKernel():
                 "\n\t".join(f", T* HYPER{i}, HYPER{i}Stride dHYPER{i}" for i in range(num)),
                 "\n\t".join(f" Tensor mHYPER{i} = make_tensor(make_gmem_ptr(HYPER{i}), select<3>(shape_MNKL), dHYPER{i});" for i in range(num)),
                 "\n\t".join(f"T hyper{i} = mHYPER{i}(bidz);" for i in range(num)),
-                _ptx_in_block(24),
-                _ptx_in_block(24),
-                _ptx_in_block(12),
+                mma_hypers,
+                "",
+                epilogue_hypers,
                 "\n\t".join(f", float *hyper{i},    uint64_t batch_stride_hyper{i}" for i in range(num)),
                 "\n\t".join(f"auto d_hyper{i} = make_stride(batch_stride_hyper{i});" for i in range(num)),
                 "\n\t\t".join(f", hyper{i}, d_hyper{i}" for i in range(num)),
@@ -258,24 +259,17 @@ class HyperSemiringKernel():
 
             inject = ptx_inject.PTXInject(annotated_ptx)
 
-            multiply = inject['multiply']
-            accumulate = inject['accumulate']
+            mma = inject['mma']
             epilogue = inject['epilogue']
 
-            assert( multiply['a'].mut_type == ptx_inject.MutType.IN)
-            assert( multiply['a'].data_type == DataTypeInfo.F32)
+            assert( mma['a'].mut_type == ptx_inject.MutType.IN)
+            assert( mma['a'].data_type == DataTypeInfo.F32)
 
-            assert( multiply['b'].mut_type == ptx_inject.MutType.IN)
-            assert( multiply['b'].data_type == DataTypeInfo.F32)
+            assert( mma['b'].mut_type == ptx_inject.MutType.IN)
+            assert( mma['b'].data_type == DataTypeInfo.F32)
 
-            assert( multiply['diff'].mut_type == ptx_inject.MutType.OUT)
-            assert( multiply['diff'].data_type == DataTypeInfo.F32)
-
-            assert( accumulate['diff'].mut_type == ptx_inject.MutType.IN)
-            assert( accumulate['diff'].data_type == DataTypeInfo.F32)
-
-            assert( accumulate['c'].mut_type == ptx_inject.MutType.MOD)
-            assert( accumulate['c'].data_type == DataTypeInfo.F32)
+            assert( mma['c'].mut_type == ptx_inject.MutType.MOD)
+            assert( mma['c'].data_type == DataTypeInfo.F32)
 
             assert( epilogue['e'].mut_type == ptx_inject.MutType.MOD)
             assert( epilogue['e'].data_type == DataTypeInfo.F32)
@@ -284,8 +278,7 @@ class HyperSemiringKernel():
             hyper_names = [f"hyper{i}" for i in range(num_hypers)]
             for h in hyper_names:
                 for group, gname in (
-                    (multiply, "multiply"),
-                    (accumulate, "accumulate"),
+                    (mma, "mma"),
                     (epilogue, "epilogue")
                 ):
                     assert group[h].mut_type == ptx_inject.MutType.IN,  f"{gname}['{h}'] must be IN"
@@ -293,29 +286,25 @@ class HyperSemiringKernel():
 
             registry = stack_ptx.RegisterRegistry()
             # Add the regular register names to the registry.
-            registry.add(multiply['a'].reg,         Stack.f32, name='multiply_a')
-            registry.add(multiply['b'].reg,         Stack.f32, name='multiply_b')
-            registry.add(multiply['diff'].reg,      Stack.f32, name='multiply_diff')
-            registry.add(accumulate['diff'].reg,    Stack.f32, name='accumulate_diff')
-            registry.add(accumulate['c'].reg,       Stack.f32, name='accumulate_c')
+            registry.add(mma['a'].reg,              Stack.f32, name='mma_a')
+            registry.add(mma['b'].reg,              Stack.f32, name='mma_b')
+            registry.add(mma['c'].reg,              Stack.f32, name='mma_c')
             registry.add(epilogue['e'].reg,         Stack.f32, name='epilogue_e')
 
             # Add the register names from the hyper parameters.
             for h in hyper_names:
-                registry.add(multiply[h].reg,     Stack.f32, name=f"multiply_{h}")
-                registry.add(accumulate[h].reg,   Stack.f32, name=f"accumulate_{h}")
+                registry.add(mma[h].reg,          Stack.f32, name=f"mma_{h}")
                 registry.add(epilogue[h].reg,     Stack.f32, name=f"epilogue_{h}")
 
             registry.freeze()
 
-            multiply_requests =     [registry.multiply_diff]
-            accumulate_requests =   [registry.accumulate_c]
+            mma_requests =          [registry.mma_c]
             epilogue_requests =     [registry.epilogue_e]
 
             def _build_stage_register_dict(stage: str) -> dict[str, object]:
                 """
                 Map user-provided names to the corresponding stage register *invocations*.
-                Example: {"my_beta": registry.multiply_hyper0(), "gamma": registry.multiply_hyper1(), ...}
+                Example: {"my_beta": registry.mma_hyper0(), "gamma": registry.mma_hyper1(), ...}
                 """
                 out: dict[str, object] = {}
                 for i, (user_name, _tensor) in enumerate(hyper_items):
@@ -327,47 +316,28 @@ class HyperSemiringKernel():
                     out[user_name] = sym  # call to produce the StackPtxInstruction for this input
                 return out
 
-            multiply_register_dict   = _build_stage_register_dict("multiply")
-            accumulate_register_dict = _build_stage_register_dict("accumulate")
+            mma_register_dict        = _build_stage_register_dict("mma")
             epilogue_register_dict   = _build_stage_register_dict("epilogue")
 
-            multiply_instructions = \
-                self.multiply_lambda(
-                    registry.multiply_a,
-                    registry.multiply_b,
-                    multiply_register_dict
+            mma_instructions = \
+                self.mma_lambda(
+                    registry.mma_a,
+                    registry.mma_b,
+                    registry.mma_c,
+                    mma_register_dict
                 )
-            
-            accumulate_instructions = \
-                self.accumulate_lambda(
-                    registry.accumulate_diff, 
-                    registry.accumulate_c,
-                    accumulate_register_dict
-                )
-            
+
             epilogue_instructions = \
                 self.epilogue_lambda(
                     registry.epilogue_e,
                     epilogue_register_dict
                 )
 
-            multiply_ptx_stub = \
+            mma_ptx_stub = \
                 stack_ptx_compiler.compile(
                     registry=registry,
-                    instructions=multiply_instructions, 
-                    requests=multiply_requests,
-                    execution_limit=self.execution_limit,
-                    max_ast_size=self.max_ast_size,
-                    max_ast_to_visit_stack_depth=self.max_ast_to_visit_stack_depth,
-                    stack_size=self.stack_size,
-                    max_frame_depth=self.max_frame_depth
-                )
-            
-            accumulate_ptx_stub = \
-                stack_ptx_compiler.compile(
-                    registry=registry,
-                    instructions=accumulate_instructions, 
-                    requests=accumulate_requests,
+                    instructions=mma_instructions, 
+                    requests=mma_requests,
                     execution_limit=self.execution_limit,
                     max_ast_size=self.max_ast_size,
                     max_ast_to_visit_stack_depth=self.max_ast_to_visit_stack_depth,
@@ -388,8 +358,7 @@ class HyperSemiringKernel():
                 )
             
             ptx_stubs = {
-                'multiply':     multiply_ptx_stub,
-                'accumulate':   accumulate_ptx_stub,
+                'mma':          mma_ptx_stub,
                 'epilogue':     epilogue_ptx_stub,
             }
 

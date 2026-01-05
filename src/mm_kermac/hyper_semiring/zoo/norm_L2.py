@@ -11,17 +11,13 @@ class NormL2:
     def __init__(self):
         self.hyper_semiring = \
             HyperSemiringKernel(
-                multiply_lambda=\
-                    lambda reg_a, reg_b, _: [
+                mma_lambda=\
+                    lambda reg_a, reg_b, reg_c, _: [
                         reg_a,
                         reg_b,
                         PtxInstruction.sub_ftz_f32,           # diff = reg_b - reg_a [diff]
                         Stack.f32.dup,                        # [diff, diff]
-                        PtxInstruction.mul_ftz_f32            # [diff * diff]
-                    ],
-                accumulate_lambda=\
-                    lambda reg_diff, reg_c, _: [
-                        reg_diff,
+                        PtxInstruction.mul_ftz_f32,           # [diff * diff]
                         reg_c,
                         PtxInstruction.add_ftz_f32
                     ],

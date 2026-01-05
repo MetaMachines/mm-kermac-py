@@ -11,8 +11,8 @@ class NormLp:
     def __init__(self, epsilon):
         self.hyper_semiring = \
             HyperSemiringKernel(
-                multiply_lambda=\
-                    lambda reg_a, reg_b, reg_dict: [
+                mma_lambda=\
+                    lambda reg_a, reg_b, reg_c, reg_dict: [
                         reg_a,
                         reg_b,
                         PtxInstruction.sub_ftz_f32,           # diff = reg_b - reg_a [diff]
@@ -24,10 +24,6 @@ class NormLp:
                         PtxInstruction.mul_ftz_f32,
                         PtxInstruction.ex2_approx_ftz_f32,    # [ex2(p_inner * lg2(abs(diff)))]
                                                                 # [pow(abs(diff), p_inner)]
-                    ],
-                accumulate_lambda=\
-                    lambda reg_diff, reg_c, _: [
-                        reg_diff,
                         reg_c,
                         PtxInstruction.add_ftz_f32
                     ],

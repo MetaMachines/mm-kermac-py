@@ -34,7 +34,7 @@ If CUDA is unavailable or your GPU is below `sm_80`, the tests will be skipped.
 ## TODO
     * Better Docs
     * Benchmarks
-    * Update multiply,accumulate to one site
+    * Use fma.ftz.. for mma for gemm
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

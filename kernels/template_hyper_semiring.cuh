@@ -316,15 +316,10 @@ kernel_cute_hyper_semiring_@1@( // Site 1 num_hypers
                 for (int n = 0; n < size<1>(tCrC); n++) {
                     T a = tCrA(m,k_block);
                     T b = tCrB(n,k_block);
-                    T diff;
-                    PTX_INJECT("multiply",
+                    T c = tCrC(m,n);
+                    PTX_INJECT("mma",
                         PTX_IN(F32, a),
                         PTX_IN(F32, b)@5@
-                        , PTX_OUT(F32, diff)
-                    );
-                    T c = tCrC(m,n);
-                    PTX_INJECT("accumulate",
-                        PTX_IN(F32, diff)@6@
                         , PTX_MOD(F32, c)
                     );
                     tCrC(m,n) = c;
