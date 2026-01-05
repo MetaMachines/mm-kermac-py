@@ -21,6 +21,16 @@ pip install mm-kermac[cu13]
 ## mm-ptx
 This repo relies on [mm-ptx](https://github.com/MetaMachines/mm-ptx-py) for the implemented routines custom routines the user might implement themselves. Please see the repo for details on how `Stack PTX` works, how to use it and simplified examples for using the system.
 
+## Tests
+Tests are GPU-backed and require CUDA with `sm_80` or greater. They are implemented as unittest copies of the examples.
+
+Run all tests:
+```bash
+python -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+If CUDA is unavailable or your GPU is below `sm_80`, the tests will be skipped.
+
 ## TODO
     * Better Docs
     * Benchmarks
