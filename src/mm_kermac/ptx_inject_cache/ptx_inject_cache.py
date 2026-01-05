@@ -10,7 +10,7 @@ import sqlite3
 import os
 import hashlib
 
-from cuda.core.experimental import Device, Program, ProgramOptions
+from cuda.core import Device, Program, ProgramOptions
 
 from .function_db_key import *
 from .function_db_value import *

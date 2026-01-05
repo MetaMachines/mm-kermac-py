@@ -1,7 +1,7 @@
 # mm-kermac
 > Dynamically compiled hyper semirings for Pytorch using PTX Inject and Stack PTX
 
-This repo provides routines for Semiring and Semiring gradient Tensor operations for PyTorch. It also provides a DSL for writing your own custom Semiring and Semiring gradient routines that may include hyperparameters passed in to the kernel. These hyperparameters can either be single values tensor, single value tensors broadcast to a batch of tensors or a vector of batched hyperparameters applied to a batch of tensors.
+This repo provides routines for Semiring and Semiring gradient Tensor operations for PyTorch. It also provides a DSL for writing your own custom Semiring and Semiring gradient routines that may include hyperparameters passed in to the kernel. These hyperparameters can either be single value tensors, single value tensors broadcast to a batch of tensors or a vector of batched hyperparameters applied to a batch of tensors.
 
 ## Installation
 `mm-kermac` only supports Nvidia cards with `sm_80` or greater:
@@ -30,11 +30,6 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
 If CUDA is unavailable or your GPU is below `sm_80`, the tests will be skipped.
-
-## TODO
-    * Better Docs
-    * Benchmarks
-    * Use fma.ftz.. for mma for gemm
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

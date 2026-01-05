@@ -13,11 +13,10 @@ class Gemm:
             HyperSemiringKernel(
                 mma_lambda=\
                     lambda reg_a, reg_b, reg_c, _: [
+                        reg_c,
                         reg_a,
                         reg_b,
-                        PtxInstruction.mul_ftz_f32,
-                        reg_c,
-                        PtxInstruction.add_ftz_f32
+                        PtxInstruction.fma_rn_ftz_f32,
                     ],
                 epilogue_lambda=\
                     lambda reg_e, _: [
