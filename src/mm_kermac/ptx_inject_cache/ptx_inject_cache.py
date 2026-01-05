@@ -12,14 +12,10 @@ import hashlib
 
 from cuda.core.experimental import Device, Program, ProgramOptions
 
-import mm_ptx.ptx_inject
-
 from .function_db_key import *
 from .function_db_value import *
 
 from .paths import *
-
-from .ptx_inject_types import DataTypeInfo
 
 def get_compute_capability(device) -> str:
     if isinstance(device, torch.device):
@@ -94,9 +90,8 @@ def compile_functions(
     function_names,
     debug = False
 ):
-    processed_cuda, num_injects = mm_ptx.ptx_inject.process_cuda(DataTypeInfo, cuda_code)
     annotated_ptx = Program(
-        processed_cuda,
+        cuda_code,
         code_type="c++", 
         options= \
             ProgramOptions(

@@ -12,6 +12,7 @@ import uuid
 import json
 import tempfile
 import cuda.pathfinder
+import mm_ptx
 
 def get_package_name():
     return "mm_kermac"
@@ -47,6 +48,7 @@ def get_include_paths():
         cuda.pathfinder.find_nvidia_header_directory('nvrtc'),      # for cuda_runtime_api.
         cuda.pathfinder.find_nvidia_header_directory('cudart'),
         get_include_local_cuda_dir(),                               # for common includes
+        mm_ptx.get_include_dir(),                                   # for ptx_inject.h (+ bundled boost)
         get_top_level_repo_dir('thirdparty/cutlass/include'),   # for cutlass includes
     ]
 

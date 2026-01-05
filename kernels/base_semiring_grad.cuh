@@ -2,6 +2,7 @@
 
 #include <kermac_internal_common.cuh>
 #include <cute/tensor.hpp>
+#include <ptx_inject.h>
 
 #if 0
 template <
@@ -365,21 +366,21 @@ kernel_cute_semiring_gradient(
                     T d = tErD(m,n);
                     T a = tErA(m,k_block);
                     T diff;
-                    /* PTX_INJECT multiply
-                        in f32 a
-                        in f32 b
-                        in f32 d
-                        out f32 diff
-                    */
+                    PTX_INJECT("multiply",
+                        PTX_IN(F32, a),
+                        PTX_IN(F32, b),
+                        PTX_IN(F32, d),
+                        PTX_OUT(F32, diff)
+                    );
                     CUTE_UNROLL
                     for (int o = 0; o < size<2>(tErE); o++) {
                         T c = tErC(o,k_block);
                         T e = tErE(m,n,o);
-                        /* PTX_INJECT accumulate
-                            in f32 c
-                            in f32 diff
-                            mod f32 e
-                        */
+                        PTX_INJECT("accumulate",
+                            PTX_IN(F32, c),
+                            PTX_IN(F32, diff),
+                            PTX_MOD(F32, e)
+                        );
                         tErE(m,n,o) = e;
                     }
                 }
@@ -390,9 +391,9 @@ kernel_cute_semiring_gradient(
     CUTE_UNROLL
     for (int i = 0; i < size(tErE); i++) {
         T e = tErE(i);
-        /* PTX_INJECT epilogue
-            mod f32 e
-        */
+        PTX_INJECT("epilogue",
+            PTX_MOD(F32, e)
+        );
         tErE(i) = e;
     }
 

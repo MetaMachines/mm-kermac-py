@@ -95,6 +95,13 @@ class HyperSemiringGradientKernel():
         with open(template_source_file, "r") as f:
             content = f.read()
             num_sites = 11
+
+            def _ptx_in_block(indent: int) -> str:
+                if num == 0:
+                    return ""
+                return "".join(
+                    f",\n{' ' * indent}PTX_IN(F32, hyper{i})" for i in range(num)
+                )
             
             templates = [
                 "\n\t".join(f"class HYPER{i}Stride," for i in range(num)),
@@ -102,9 +109,9 @@ class HyperSemiringGradientKernel():
                 "\n\t".join(f", T* HYPER{i}, HYPER{i}Stride dHYPER{i}" for i in range(num)),
                 "\n\t".join(f" Tensor mHYPER{i} = make_tensor(make_gmem_ptr(HYPER{i}), select<3>(shape_MNOKL), dHYPER{i});" for i in range(num)),
                 "\n\t".join(f"T hyper{i} = mHYPER{i}(bidw);" for i in range(num)),
-                "\n\t\t\t\t\t\t".join(f"in f32 hyper{i}" for i in range(num)),
-                "\n\t\t\t\t\t\t".join(f"in f32 hyper{i}" for i in range(num)),
-                "\n\t\t\t".join(f"in f32 hyper{i}" for i in range(num)),
+                _ptx_in_block(24),
+                _ptx_in_block(28),
+                _ptx_in_block(12),
                 "\n\t".join(f", float *hyper{i},    uint64_t batch_stride_hyper{i}" for i in range(num)),
                 "\n\t".join(f"auto d_hyper{i} = make_stride(batch_stride_hyper{i});" for i in range(num)),
                 "\n\t\t".join(f", hyper{i}, d_hyper{i}" for i in range(num)),
@@ -264,7 +271,7 @@ class HyperSemiringGradientKernel():
                     get_cuda_source_lambda,
                     debug=debug
                 )
-            inject = ptx_inject.PTXInject(DataTypeInfo, annotated_ptx)
+            inject = ptx_inject.PTXInject(annotated_ptx)
 
             multiply = inject['multiply']
             accumulate = inject['accumulate']

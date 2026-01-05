@@ -24,6 +24,7 @@ This repo relies on [mm-ptx](https://github.com/MetaMachines/mm-ptx-py) for the 
 ## TODO
     * Better Docs
     * Benchmarks
+    * Update multiply,accumulate to one site
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

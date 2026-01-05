@@ -2,6 +2,7 @@
 
 #include <kermac_internal_common.cuh>
 #include <cute/tensor.hpp>
+#include <ptx_inject.h>
 
 #if 0
 template <
@@ -306,16 +307,16 @@ kernel_cute_semiring(
                     T a = tCrA(m,k_block);
                     T b = tCrB(n,k_block);
                     T diff;
-                    /* PTX_INJECT multiply
-                        in f32 a
-                        in f32 b
-                        out f32 diff
-                    */
+                    PTX_INJECT("multiply",
+                        PTX_IN(F32, a),
+                        PTX_IN(F32, b),
+                        PTX_OUT(F32, diff)
+                    );
                     T c = tCrC(m,n);
-                    /* PTX_INJECT accumulate
-                        in f32 diff
-                        mod f32 c
-                    */
+                    PTX_INJECT("accumulate",
+                        PTX_IN(F32, diff),
+                        PTX_MOD(F32, c)
+                    );
                     tCrC(m,n) = c;
                 }
             }
@@ -326,9 +327,9 @@ kernel_cute_semiring(
     CUTE_UNROLL
     for (int i = 0; i < size(tCrC); i++) {
         T e = tCrC(i);
-        /* PTX_INJECT epilogue
-            mod f32 e
-        */
+        PTX_INJECT("epilogue",
+            PTX_MOD(F32, e)
+        );
         tCrC(i) = e;
     }
 

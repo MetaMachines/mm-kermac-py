@@ -33,7 +33,7 @@ dependencies    = [
   "platformdirs>=3.0",
   "torch>=2.0",
   "cuda-toolkit[cccl]",
-  "mm-ptx>=0.1.2"
+  "mm-ptx>=1.0.0"
 ]
 
 [project.optional-dependencies]
